@@ -20,10 +20,10 @@ covers the three things onboarding actually needs: **cloud, identity and automat
 | Phase | What works | Status |
 |---|---|---|
 | 0 | Clean prototype, fictional company, repository | ✅ |
-| 1 | Microsoft Entra ID sign-in · roles (employee, HR, admin) · policies stored in a database · "read and accepted" recorded with timestamp · audit export · deployed on Azure | ⏳ |
-| 2 | Joiner–mover–leaver automation: HR registers a hire → account created via Microsoft Graph, added to the department group, onboarding checklist assigned; leaver → account disabled, access removed; every action logged | ⏳ |
+| 1 | Deployed on Azure with **infrastructure as code (Bicep) and CI/CD (GitHub Actions)** from day one · Microsoft Entra ID sign-in · roles (employee, HR, admin) · policies stored in a database · "read and accepted" recorded with timestamp · audit export | ⏳ |
+| 2 | Joiner–mover–leaver automation with **PowerShell + Microsoft Graph**: HR registers a hire → account created, added to the department group, onboarding checklist assigned; leaver → account disabled, access removed; every action logged | ⏳ |
 | 3 | AI assistant answering from company documents, with sources — and respecting each user's access rights | ⏳ |
-| 4 | Infrastructure as code, CI/CD, cost alerts | ⏳ |
+| 4 | Monitoring, cost alerts and hardening | ⏳ |
 
 Design decisions and their reasons: [`docs/decisions.md`](docs/decisions.md).
 
@@ -35,7 +35,8 @@ IT support + tickets · feedback. UI in Portuguese (PT).
 ## Stack
 
 React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui. Planned: Azure Static Web Apps +
-Azure Functions, Microsoft Entra ID, Microsoft Graph, an LLM API for the assistant.
+Azure Functions, Bicep, GitHub Actions, Microsoft Entra ID, Microsoft Graph + PowerShell,
+an LLM API for the assistant.
 
 ## Run locally
 

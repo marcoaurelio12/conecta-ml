@@ -26,3 +26,13 @@ Functions, Entra ID), not the Cloudflare/Hetzner stack I use day to day.
 **Why:** most Portuguese employers run on Microsoft; the project doubles as hands-on
 practice for AZ-900 → AZ-104 / SC-300 / AI-102. Trade-off: slower start on a less
 familiar stack.
+
+## 004 — Infrastructure as code and CI/CD in phase 1, PowerShell in phase 2 (2026-09-26)
+
+**Decision:** move Bicep + GitHub Actions from the last phase to the first, and write the
+joiner–mover–leaver automation in PowerShell (Microsoft Graph SDK).
+**Why:** a review of ~25 Portuguese job ads for Azure / workplace / system administrator
+roles showed PowerShell and infrastructure as code (Bicep or Terraform) with pipelines as
+the most repeated requirements. Building them in from the start is also less work than
+retrofitting. Bicep over Terraform: native to Azure and simpler to start; Terraform can
+come later.
