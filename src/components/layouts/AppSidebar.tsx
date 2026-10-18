@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { navigation } from "@/config/navigation";
 import { useCurrentUser } from "@/contexts/CurrentUserContext";
+import { isDemoMode } from "@/config/demo";
 import { allRoles, roleLabels, Role } from "@/types/user";
 import {
   Select,
@@ -106,12 +107,15 @@ const AppSidebar: React.FC = () => {
       </SidebarContent>
 
       <SidebarFooter>
-        {import.meta.env.DEV && (
+        {isDemoMode && (
           <div className="px-2 pb-1 group-data-[collapsible=icon]:hidden">
+            <p id="role-switcher-label" className="mb-1.5 px-1 text-xs text-sidebar-muted">
+              Ver o portal como
+            </p>
             <Select value={role} onValueChange={(value) => setRole(value as Role)}>
               <SelectTrigger
                 className="h-9 border-sidebar-border bg-sidebar-accent text-sidebar-foreground"
-                aria-label="Assumir papel (apenas em desenvolvimento)"
+                aria-labelledby="role-switcher-label"
               >
                 <SelectValue />
               </SelectTrigger>

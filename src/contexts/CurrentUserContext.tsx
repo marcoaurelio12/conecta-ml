@@ -7,7 +7,7 @@ const ROLE_STORAGE_KEY = "conecta.role";
 interface CurrentUserContextValue {
   user: CurrentUser;
   role: Role;
-  /** Dev-only helper behind the sidebar switcher; MSAL replaces it in M1. */
+  /** Dev and demo-build helper behind the sidebar switcher; MSAL replaces it in M1. */
   setRole: (role: Role) => void;
 }
 

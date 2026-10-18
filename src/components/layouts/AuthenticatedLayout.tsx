@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import AppSidebar from "./AppSidebar";
 import { UserMenu } from "./UserMenu";
+import { DemoNotice } from "./DemoNotice";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface AuthenticatedLayoutProps {
@@ -42,7 +43,8 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/75">
           <SidebarTrigger aria-label="Abrir ou fechar menu" />
           <Separator orientation="vertical" className="h-5" />
-          <div className="ml-auto flex items-center gap-1">
+          <DemoNotice />
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <ThemeToggle />
             <UserMenu />
           </div>

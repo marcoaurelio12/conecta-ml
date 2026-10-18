@@ -49,6 +49,11 @@ npm install
 npm run dev   # http://localhost:8080
 ```
 
+`npm run build:demo` builds the public demo: the role switcher stays visible in the sidebar
+("Ver o portal como") and a header notice says the company and people are fictional. Until
+Entra ID sign-in arrives in phase 1, switching roles is how a visitor sees what each role
+(employee, manager, HR, IAM admin) is allowed to use.
+
 ## Origin and honesty note
 
 The 2025 prototype UI was generated with Lovable (an AI app builder) from my own design and
