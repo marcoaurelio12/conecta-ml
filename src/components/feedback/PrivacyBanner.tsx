@@ -23,9 +23,9 @@ const PrivacyBanner: React.FC = () => {
     <Alert className="mb-6 bg-muted/50 border border-muted" role="status">
       <div className="flex items-start justify-between">
         <AlertDescription className="text-sm">
-          O seu feedback ajuda-nos a melhorar. Todas as respostas são recolhidas de acordo com a nossa{" "}
+          O seu feedback ajuda-nos a melhorar. Todas as respostas são recolhidas nos termos da nossa{" "}
           <Link 
-            to="/documents/privacy-policy" 
+            to="/documents" 
             className="font-medium underline underline-offset-4 hover:text-primary"
           >
             Política de Privacidade

@@ -1,12 +1,22 @@
-
 import React, { useEffect, useRef } from "react";
 
-const colors = ["#8B5CF6", "#D946EF", "#F97316", "#0EA5E9", "#22C55E"];
+/** Brand palette, read from the design tokens so confetti follows the theme. */
+const tokenColors = (fallbacks: string[]): string[] => {
+  if (typeof window === "undefined") return fallbacks;
+  const styles = getComputedStyle(document.documentElement);
+  return ["primary", "success", "warning", "muted-foreground"].map((token) => {
+    const value = styles.getPropertyValue(`--${token}`).trim();
+    return value ? `hsl(${value})` : fallbacks[0];
+  });
+};
 
 const ConfettiEffect: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // Respect the OS reduce-motion setting: skip the animation entirely.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -17,6 +27,8 @@ const ConfettiEffect: React.FC = () => {
     const canvasHeight = window.innerHeight;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+
+    const colors = tokenColors(["#007EA7", "#008550", "#EAA900"]);
 
     const confettiPieces: Array<{
       x: number;
@@ -29,12 +41,11 @@ const ConfettiEffect: React.FC = () => {
       rotationSpeed: number;
     }> = [];
 
-    // Create confetti pieces
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 160; i++) {
       confettiPieces.push({
         x: Math.random() * canvasWidth,
         y: Math.random() * canvasHeight - canvasHeight,
-        size: Math.random() * 10 + 5,
+        size: Math.random() * 8 + 4,
         color: colors[Math.floor(Math.random() * colors.length)],
         speed: Math.random() * 3 + 2,
         angle: Math.random() * Math.PI * 2,
@@ -44,16 +55,15 @@ const ConfettiEffect: React.FC = () => {
     }
 
     let animationFrameId: number;
-    
-    // Update confetti positions
+
     const animate = () => {
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
       confettiPieces.forEach((piece) => {
         piece.y += piece.speed;
-        piece.x += Math.sin(piece.angle) * 1;
+        piece.x += Math.sin(piece.angle);
         piece.rotation += piece.rotationSpeed;
-        
+
         ctx.save();
         ctx.translate(piece.x, piece.y);
         ctx.rotate(piece.rotation);
@@ -67,18 +77,11 @@ const ConfettiEffect: React.FC = () => {
 
     animate();
 
-    // Clean up
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+    return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-50" 
-      aria-hidden="true"
-    />
+    <canvas ref={canvasRef} className="fixed inset-0 z-50 pointer-events-none" aria-hidden="true" />
   );
 };
 

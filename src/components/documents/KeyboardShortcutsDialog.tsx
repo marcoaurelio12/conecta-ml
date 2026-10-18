@@ -21,7 +21,6 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
   const shortcuts = [
     { key: '/', description: 'Focar barra de pesquisa' },
     { key: '?', description: 'Abrir este diálogo de ajuda' },
-    { key: 'Esc', description: 'Limpar pesquisa ou fechar diálogo' },
   ];
 
   return (
@@ -45,7 +44,7 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
             {shortcuts.map((shortcut) => (
               <TableRow key={shortcut.key}>
                 <TableCell>
-                  <kbd className="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
+                  <kbd className="rounded-lg border bg-muted px-2 py-1.5 font-mono text-xs font-semibold text-foreground">
                     {shortcut.key}
                   </kbd>
                 </TableCell>

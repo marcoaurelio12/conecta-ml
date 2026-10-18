@@ -1,66 +1,80 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Benefit } from "@/types/benefit";
-import * as Icons from "lucide-react";
-import { Icon } from "lucide-react";
+import { benefitStatusMeta } from "@/types/status";
+import {
+  Award,
+  Baby,
+  Book,
+  Brain,
+  Bus,
+  Calendar,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Dumbbell,
+  Handshake,
+  Heart,
+  Home,
+  PiggyBank,
+  Shield,
+  type LucideIcon,
+} from "lucide-react";
+import { BenefitIcon } from "@/types/benefit";
 
 interface BenefitCardProps {
   benefit: Benefit;
+  onOpen: (benefit: Benefit) => void;
 }
 
-const getIconColor = (color: string) => {
-  const colorMap: Record<string, string> = {
-    blue: "text-portugalPalette-dark-blue-1",
-    green: "text-portugalPalette-light-blue-2",
-    purple: "text-portugalPalette-dark-blue-2",
-    orange: "text-portugalPalette-blue",
-    yellow: "text-portugalPalette-light-blue-1"
-  };
-  return colorMap[color] || "text-primary";
-};
+/* Fixture icons are stored as typed strings; the exhaustive map keeps lucide
+   tree-shakeable — a star import pulls the whole icon set into the bundle.
+   `satisfies` makes a missing icon a compile error instead of a "?" at runtime. */
+const iconMap = {
+  award: Award,
+  baby: Baby,
+  book: Book,
+  brain: Brain,
+  bus: Bus,
+  calendar: Calendar,
+  clock: Clock,
+  "credit-card": CreditCard,
+  "dollar-sign": DollarSign,
+  dumbbell: Dumbbell,
+  handshake: Handshake,
+  heart: Heart,
+  home: Home,
+  "piggy-bank": PiggyBank,
+  shield: Shield,
+} satisfies Record<BenefitIcon, LucideIcon>;
 
-const getBadgeVariant = (status: string) => {
-  const variantMap: Record<string, "default" | "secondary" | "outline"> = {
-    Elegível: "outline",
-    Inscrito: "default",
-    Pendente: "secondary"
-  };
-  return variantMap[status] || "outline";
-};
+const BenefitCard: React.FC<BenefitCardProps> = ({ benefit, onOpen }) => {
+  const IconComponent = iconMap[benefit.icon];
 
-const BenefitCard: React.FC<BenefitCardProps> = ({ benefit }) => {
-  // Dynamically get icon from Lucide
-  const IconComponent = benefit.icon in Icons 
-    ? (Icons as any)[benefit.icon.charAt(0).toUpperCase() + benefit.icon.slice(1)]
-    : Icons.HelpCircle;
-  
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg">
-      <CardContent className="p-0">
-        <div className="p-6 h-full flex flex-col">
-          <div className="flex items-start justify-between mb-3">
-            <div className={`p-2 rounded-md border ${getIconColor(benefit.color)}`}>
-              <IconComponent size={24} />
-            </div>
-            <Badge variant={getBadgeVariant(benefit.status)}>{benefit.status}</Badge>
+    <Card className="flex h-full flex-col transition-all duration-fast hover:-translate-y-0.5 hover:shadow-md">
+      <CardContent className="flex h-full flex-col p-6">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div
+            className="rounded-md border border-primary/15 bg-primary/10 p-2 text-primary"
+            aria-hidden="true"
+          >
+            <IconComponent size={22} />
           </div>
-          
-          <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
-          <p className="text-muted-foreground mb-6 flex-grow">{benefit.summary}</p>
-          
-          <Link to={`/benefits/${benefit.id}`}>
-            <Button 
-              className="w-full"
-              variant={benefit.status === "Eligible" ? "default" : "secondary"}
-            >
-              {benefit.status === "Elegível" ? "Inscrever-se Agora" : "Saber Mais"}
-            </Button>
-          </Link>
+          <Badge variant={benefitStatusMeta[benefit.status].badgeVariant}>
+            {benefit.status}
+          </Badge>
         </div>
+
+        <h3 className="mb-1.5 text-lg font-semibold leading-snug">{benefit.title}</h3>
+        <p className="mb-6 flex-grow text-sm text-muted-foreground">{benefit.summary}</p>
+
+        {/* The detail lives in this data already — one quiet action opens it. */}
+        <Button variant="outline" className="w-full" onClick={() => onOpen(benefit)}>
+          Saber mais
+        </Button>
       </CardContent>
     </Card>
   );

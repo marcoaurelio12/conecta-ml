@@ -1,120 +1,117 @@
+import { useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Search, HelpCircle, ArrowDown, ArrowUp } from "lucide-react";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Document, DocumentCategory, DocumentFileType } from "@/types/document";
+import { documentData } from "@/data/documentData";
+import { DocumentItem } from "@/components/documents/DocumentItem";
+import { DocumentFilters } from "@/components/documents/DocumentFilters";
+import { KeyboardShortcutsDialog } from "@/components/documents/KeyboardShortcutsDialog";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Search, HelpCircle, ArrowDown, ArrowUp } from 'lucide-react';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Link } from 'react-router-dom';
-import { Document } from '@/types/document';
-import { documentData } from '@/data/documentData';
-import { DocumentItem } from '@/components/documents/DocumentItem';
-import { DocumentFilters } from '@/components/documents/DocumentFilters';
-import { KeyboardShortcutsDialog } from '@/components/documents/KeyboardShortcutsDialog';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
+type SortField = "title" | "dateUploaded";
+type SortOrder = "asc" | "desc";
 
-type SortField = 'title' | 'dateUploaded';
-type SortOrder = 'asc' | 'desc';
+const bookmarksStorageKey = "conecta.bookmarks.v1";
 
 const Documents = () => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<DocumentCategory | null>(null);
+  const [fileTypeFilter, setFileTypeFilter] = useState<DocumentFileType | null>(null);
   const [showHelpDialog, setShowHelpDialog] = useState<boolean>(false);
-  const [sortField, setSortField] = useState<SortField>('dateUploaded');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [documents, setDocuments] = useState<Document[]>(documentData);
+  const [sortField, setSortField] = useState<SortField>("dateUploaded");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  // Bookmark overrides persist per user; the fixture value is the default.
+  const [bookmarks, setBookmarks] = usePersistentState<Record<string, boolean>>(
+    bookmarksStorageKey,
+    {}
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { toast } = useToast();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['documents', debouncedSearchQuery, categoryFilter, fileTypeFilter, sortField, sortOrder],
+  // One data path through react-query — the local copy + useEffect is gone.
+  const { data: documents = [], isLoading } = useQuery({
+    queryKey: ["documents", debouncedSearchQuery, categoryFilter, fileTypeFilter, sortField, sortOrder],
     queryFn: () => {
-      // In a real app, this would be an API call
-      // For now, we'll filter and sort the static data
       let filteredDocs = [...documentData];
 
       if (debouncedSearchQuery) {
         const query = debouncedSearchQuery.toLowerCase();
         filteredDocs = filteredDocs.filter(
-          doc =>
+          (doc) =>
             doc.title.toLowerCase().includes(query) ||
             doc.summary.toLowerCase().includes(query) ||
-            doc.tags.some(tag => tag.toLowerCase().includes(query))
+            doc.tags.some((tag) => tag.toLowerCase().includes(query))
         );
       }
 
       if (categoryFilter) {
-        filteredDocs = filteredDocs.filter(doc => doc.category === categoryFilter);
+        filteredDocs = filteredDocs.filter((doc) => doc.category === categoryFilter);
       }
 
       if (fileTypeFilter) {
-        filteredDocs = filteredDocs.filter(doc => doc.fileType === fileTypeFilter);
+        filteredDocs = filteredDocs.filter((doc) => doc.fileType === fileTypeFilter);
       }
 
-      // Sort the documents
       filteredDocs.sort((a, b) => {
-        if (sortField === 'title') {
-          return sortOrder === 'asc'
+        if (sortField === "title") {
+          return sortOrder === "asc"
             ? a.title.localeCompare(b.title)
             : b.title.localeCompare(a.title);
-        } else {
-          return sortOrder === 'asc'
-            ? new Date(a.dateUploaded).getTime() - new Date(b.dateUploaded).getTime()
-            : new Date(b.dateUploaded).getTime() - new Date(a.dateUploaded).getTime();
         }
+        return sortOrder === "asc"
+          ? new Date(a.dateUploaded).getTime() - new Date(b.dateUploaded).getTime()
+          : new Date(b.dateUploaded).getTime() - new Date(a.dateUploaded).getTime();
       });
 
       return filteredDocs;
     },
   });
 
-  useEffect(() => {
-    if (data) {
-      setDocuments(data);
-    }
-  }, [data]);
-
   // Register keyboard shortcuts
-  useKeyboardShortcut('/', (e) => {
+  useKeyboardShortcut("/", (e) => {
     e.preventDefault();
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+    searchInputRef.current?.focus();
   });
 
-  useKeyboardShortcut('?', (e) => {
+  useKeyboardShortcut("?", (e) => {
     e.preventDefault();
     setShowHelpDialog(true);
   });
 
+  const withBookmarks = useMemo(
+    () => documents.map((doc) => ({ ...doc, isBookmarked: bookmarks[doc.id] ?? doc.isBookmarked })),
+    [documents, bookmarks]
+  );
+
   const handleToggleBookmark = (docId: string) => {
-    setDocuments(prevDocs =>
-      prevDocs.map(doc => {
-        if (doc.id === docId) {
-          const newIsBookmarked = !doc.isBookmarked;
-          toast({
-            title: newIsBookmarked ? "Documento marcado" : "Marcação removida",
-            description: `Marcação ${newIsBookmarked ? "adicionada" : "removida"} para "${doc.title}"`,
-          });
-          return { ...doc, isBookmarked: newIsBookmarked };
-        }
-        return doc;
-      })
-    );
+    const doc = withBookmarks.find((d) => d.id === docId);
+    setBookmarks((current) => ({ ...current, [docId]: !(current[docId] ?? doc?.isBookmarked ?? false) }));
+    if (doc) {
+      const nowBookmarked = !(bookmarks[docId] ?? doc.isBookmarked);
+      toast[nowBookmarked ? "success" : "info"](
+        nowBookmarked ? `Marcador adicionado a “${doc.title}”.` : `Marcador removido de “${doc.title}”.`
+      );
+    }
+  };
+
+  const handleDownload = (doc: Document) => {
+    // Mock download until the document API exists.
+    toast.info(`A descarregar “${doc.title}”…`);
   };
 
   const handleSortChange = (field: SortField) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
@@ -125,29 +122,38 @@ const Documents = () => {
 
   return (
     <DashboardLayout>
-      <div className="container max-w-6xl mx-auto p-4">
-
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Biblioteca de Documentos</h1>
-            <Button variant="ghost" size="icon" onClick={() => setShowHelpDialog(true)} aria-label="Ajuda">
-              <HelpCircle className="h-5 w-5" />
-            </Button>
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Biblioteca de Documentos</h1>
+            <p className="mt-1 text-muted-foreground">
+              Políticas, modelos e formulários num único sítio.
+            </p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHelpDialog(true)}
+            aria-label="Ver atalhos de teclado"
+          >
+            <HelpCircle className="size-5" />
+          </Button>
+        </div>
 
-          {/* Hero search section */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Pesquisar documentos…"
-              className="pl-10 h-12 text-lg"
-              aria-label="Pesquisar documentos"
-            />
-          </div>
+        {/* Search */}
+        <div className="relative mt-6">
+          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Pesquisar documentos…"
+            className="h-12 pl-10 text-base"
+            aria-label="Pesquisar documentos"
+          />
+        </div>
 
+        <div className="mt-4">
           <DocumentFilters
             categoryFilter={categoryFilter}
             fileTypeFilter={fileTypeFilter}
@@ -155,89 +161,94 @@ const Documents = () => {
             onFileTypeFilterChange={setFileTypeFilter}
             onClearFilters={clearFilters}
           />
+        </div>
 
-          {/* Sorting controls */}
-          <div className="flex justify-between items-center border-b pb-2">
-            <div className="text-sm text-muted-foreground">
-              {documents.length} {documents.length === 1 ? 'documento' : 'documentos'} encontrado(s)
-            </div>
-            <div className="flex gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-sm font-normal"
-                onClick={() => handleSortChange('title')}
-              >
-                Título
-                {sortField === 'title' && (
-                  sortOrder === 'asc' ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-sm font-normal"
-                onClick={() => handleSortChange('dateUploaded')}
-              >
-                Data de Carregamento
-                {sortField === 'dateUploaded' && (
-                  sortOrder === 'asc' ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
-                )}
-              </Button>
-            </div>
+        {/* Sorting controls */}
+        <div className="mt-4 flex items-center justify-between border-b pb-2">
+          <div className="text-sm text-muted-foreground" aria-live="polite">
+            {withBookmarks.length} {withBookmarks.length === 1 ? "documento" : "documentos"}
           </div>
-
-          {/* Document list */}
-          <div className="flex flex-col divide-y">
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="py-4 flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-md" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <div className="flex gap-2 mt-2">
-                      <Skeleton className="h-6 w-16 rounded-full" />
-                      <Skeleton className="h-6 w-16 rounded-full" />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Skeleton className="h-9 w-9 rounded-md" />
-                    <Skeleton className="h-9 w-9 rounded-md" />
-                    <Skeleton className="h-9 w-9 rounded-md" />
-                  </div>
-                </div>
-              ))
-            ) : documents.length > 0 ? (
-              documents.map((doc) => (
-                <DocumentItem 
-                  key={doc.id} 
-                  document={doc} 
-                  onToggleBookmark={handleToggleBookmark} 
-                />
-              ))
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">Nenhum documento encontrado para os seus critérios de pesquisa.</p>
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setSearchQuery('');
-                    clearFilters();
-                  }}
-                >
-                  Limpar todos os filtros
-                </Button>
-              </div>
-            )}
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => handleSortChange("title")}
+            >
+              Título
+              {sortField === "title" &&
+                (sortOrder === "asc" ? (
+                  <ArrowUp className="ml-1 size-4" />
+                ) : (
+                  <ArrowDown className="ml-1 size-4" />
+                ))}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => handleSortChange("dateUploaded")}
+            >
+              Data
+              {sortField === "dateUploaded" &&
+                (sortOrder === "asc" ? (
+                  <ArrowUp className="ml-1 size-4" />
+                ) : (
+                  <ArrowDown className="ml-1 size-4" />
+                ))}
+            </Button>
           </div>
         </div>
 
-        <KeyboardShortcutsDialog
-          open={showHelpDialog}
-          onOpenChange={setShowHelpDialog}
-        />
+        {/* Document list */}
+        <div className="flex flex-col divide-y">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-4 py-4">
+                <Skeleton className="size-10 rounded-md" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <div className="mt-2 flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="size-9 rounded-md" />
+                  <Skeleton className="size-9 rounded-md" />
+                </div>
+              </div>
+            ))
+          ) : withBookmarks.length > 0 ? (
+            withBookmarks.map((doc) => (
+              <DocumentItem
+                key={doc.id}
+                document={doc}
+                onToggleBookmark={handleToggleBookmark}
+                onDownload={handleDownload}
+              />
+            ))
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-muted-foreground">
+                Nenhum documento encontrado para os seus critérios de pesquisa.
+              </p>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setSearchQuery("");
+                  clearFilters();
+                }}
+              >
+                Limpar pesquisa e filtros
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
+
+      <KeyboardShortcutsDialog open={showHelpDialog} onOpenChange={setShowHelpDialog} />
     </DashboardLayout>
   );
 };

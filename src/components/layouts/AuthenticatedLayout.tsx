@@ -1,115 +1,62 @@
-
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import MobileNav from './MobileNav';
-
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React, { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import AppSidebar from "./AppSidebar";
+import { UserMenu } from "./UserMenu";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { title: "Painel", href: "/" },
-  { title: "Lista de Verificação", href: "/checklist" },
-  { title: "Formação", href: "/learning" },
-  { title: "Documentos", href: "/documents" },
-  { title: "Suporte", href: "/it-support" },
-  { title: "Benefícios", href: "/benefits" },
-  { title: "Feedback", href: "/feedback" },
-];
-
+/**
+ * App shell: a dark brand rail for navigation (sidebar tokens) and a light
+ * content canvas. Works as a collapsible rail on desktop and as an off-canvas
+ * sheet on mobile, both via the same shadcn Sidebar primitives.
+ */
 const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) => {
-  const location = useLocation();
-  
+  const { pathname } = useLocation();
+  const isFirstRender = useRef(true);
+
+  // Move focus to the content region on navigation so keyboard and screen
+  // reader users land in the new screen instead of staying on the header.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    document.getElementById("content")?.focus({ preventScroll: true });
+  }, [pathname]);
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Top Header */}
-      <header className="border-b border-border bg-foreground sticky top-0 z-40 w-full shadow-md">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="font-bold text-xl" style={{ color: '#2DD4BF' }}>Nortia</Link>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <a
+          href="#content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+        >
+          Saltar para o conteúdo
+        </a>
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+          <SidebarTrigger aria-label="Abrir ou fechar menu" />
+          <Separator orientation="vertical" className="h-5" />
+          <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle />
+            <UserMenu />
           </div>
+        </header>
 
-          {/* Mobile Menu - centered in navbar */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex md:hidden">
-            <MobileNav navItems={navItems} />
-          </div>
-
-          {/* Center Navigation */}
-          <NavigationMenu className="hidden md:flex">
-            <NavigationMenuList>
-              {navItems.map((item) => (
-                <NavigationMenuItem key={item.title}>
-                  <Link to={item.href}>
-                    <NavigationMenuLink
-                      className={cn(
-                        navigationMenuTriggerStyle(),
-                        "text-primary hover:bg-primary hover:text-secondary",
-                        location.pathname === item.href && "bg-primary text-background"
-                      )}
-                    >
-                      {item.title}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
-
-          {/* User Avatar Dropdown */}
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Menu do utilizador"
-                >
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback className="bg-accent text-foreground">U</AvatarFallback>
-                  </Avatar>
-                  <ChevronDown className="h-4 w-4 text-primary" />
-                </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background border-border">
-                  <DropdownMenuItem className="text-foreground hover:bg-secondary">Perfil</DropdownMenuItem>
-                  <DropdownMenuItem className="text-foreground hover:bg-secondary">Definições</DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-border/30" />
-                  <DropdownMenuItem className="text-primary hover:bg-secondary">Terminar sessão</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 bg-background">
-        <div className="container py-8 px-4">
-          {children}
-        </div>
-      </main>
-    </div>
+        <main
+          id="content"
+          tabIndex={-1}
+          className="flex-1 px-4 py-6 outline-none md:px-8 md:py-8"
+        >
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

@@ -1,187 +1,236 @@
-
-import React, { useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Crosshair,
+  Expand,
   MapPin,
+  RotateCcw,
   Search,
-  UserRound,
+  Shrink,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Input } from "@/components/ui/input";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { EmployeeDetailsDialog } from "@/components/org-chart/EmployeeDetailsDialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  OrgChartHandle,
+  OrgChartVisualization,
+} from "@/components/org-chart/OrgChartVisualization";
+import { EmployeeDetailsSheet } from "@/components/org-chart/EmployeeDetailsSheet";
 import { employeeData } from "@/data/employeeData";
 import { EmployeeType } from "@/types/employee";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Link } from "react-router-dom";
+import { useCurrentUser } from "@/contexts/CurrentUserContext";
 
-// Define the structure for the org chart node
-interface OrgChartNode {
-  id: string;
-  entity: {
-    id: string;
-    avatar?: string;
-    name: string;
-    title: string;
-  };
-  children: OrgChartNode[];
-}
-
-// Function to transform flat employee data into a tree structure
-const buildOrgTree = (employees: EmployeeType[]): OrgChartNode | null => {
-  const employeeMap: { [key: string]: OrgChartNode } = {};
-  let root: OrgChartNode | null = null;
-
-  // Create a map of employees for easy lookup
-  employees.forEach(employee => {
-    employeeMap[employee.id] = {
-      id: employee.id,
-      entity: {
-        id: employee.id,
-        avatar: employee.imageUrl, // Using imageUrl as avatar
-        name: employee.name,
-        title: employee.title,
-      },
-      children: [],
-    };
-  });
-
-  // Build the tree
-  employees.forEach(employee => {
-    if (employee.managerId === null) {
-      // This is the root employee
-      root = employeeMap[employee.id];
-    } else {
-      // Find the manager and add the employee as a child
-      const manager = employeeMap[employee.managerId];
-      if (manager) {
-        manager.children.push(employeeMap[employee.id]);
-      }
-    }
-  });
-
-  return root;
-};
-
+const SEARCH_RESULT_LIMIT = 6;
 
 const OrgChart = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeType | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  // Label state for the expand/collapse-all button, reported by the canvas.
+  const [anyCollapsed, setAnyCollapsed] = useState(true);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const isMobile = useIsMobile();
+  const chartRef = useRef<OrgChartHandle>(null);
+  const { user } = useCurrentUser();
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees"],
-    queryFn: () => {
-      // In a real app, fetch from API
-      return Promise.resolve(employeeData);
-    },
+    queryFn: () => Promise.resolve(employeeData),
   });
 
-  const orgTreeData = buildOrgTree(employees);
+  // One match computation feeds both the accessible results list and the
+  // canvas highlight/dim, so the two never disagree.
+  const matchIds = useMemo(() => {
+    const query = debouncedSearchQuery.trim().toLowerCase();
+    if (!query) return new Set<string>();
+    return new Set(
+      employees
+        .filter(
+          (employee) =>
+            employee.name.toLowerCase().includes(query) ||
+            employee.title.toLowerCase().includes(query) ||
+            employee.department.toLowerCase().includes(query)
+        )
+        .map((employee) => employee.id)
+    );
+  }, [employees, debouncedSearchQuery]);
+  const isSearching = debouncedSearchQuery.trim().length >= 2;
 
-  const filteredEmployees = debouncedSearchQuery
-    ? employees.filter(emp =>
-        emp.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-        emp.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
-    : employees;
+  const searchResults = useMemo(
+    () => employees.filter((employee) => matchIds.has(employee.id)),
+    [employees, matchIds]
+  );
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.2, 2));
-  };
+  const departmentCount = useMemo(
+    () => new Set(employees.map((employee) => employee.department)).size,
+    [employees]
+  );
 
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
-  };
+  // A result answers twice: the profile opens and the chart pans to the card.
+  const handleSelectFromSearch = useCallback((employee: EmployeeType) => {
+    setSelectedEmployee(employee);
+    chartRef.current?.centerOnEmployee(employee.id);
+  }, []);
 
-  const handleCenterOnMe = () => {
-    // In a real app, you would get the current user's ID
-    const currentUserID = "1"; // CEO for demo
-    const employee = employees.find(emp => emp.id === currentUserID);
-    if (employee) {
-      setSelectedEmployee(employee);
-    }
-  };
+  const handleCenterOnTree = useCallback((employee: EmployeeType) => {
+    setSelectedEmployee(null);
+    chartRef.current?.centerOnEmployee(employee.id);
+  }, []);
 
-  // Function to handle node clicks in the new OrgChart
-  const handleNodeClick = (nodeId: string) => {
-    const employee = employees.find(emp => emp.id === nodeId);
-    if (employee) {
-      setSelectedEmployee(employee);
-    }
-  };
-
+  const handleNodeClick = useCallback((employee: EmployeeType) => {
+    setSelectedEmployee(employee);
+  }, []);
 
   return (
     <DashboardLayout>
-      <div className="container p-4 max-w-7xl mx-auto">
-
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <h1 className="text-2xl font-bold">Organograma Interativo</h1>
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Pesquisar colaboradores..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
-              />
-            </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Organograma</h1>
+            <p className="mt-1 text-muted-foreground">
+              Conheça a estrutura da empresa e quem faz o quê.
+            </p>
           </div>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar colaboradores…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+              aria-label="Pesquisar colaboradores"
+            />
+          </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow p-4 min-h-[500px]">
-            <div className="flex justify-between mb-4">
-              <div className="flex space-x-2">
-                <Button size="sm" variant="outline" onClick={handleZoomIn}>
-                  <ZoomIn className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Aumentar Zoom</span>
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleZoomOut}>
-                  <ZoomOut className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Diminuir Zoom</span>
-                </Button>
-              </div>
-              <Button size="sm" onClick={handleCenterOnMe}>
-                <MapPin className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Centrar em Mim</span>
-              </Button>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <span className="loading loading-spinner loading-lg"></span>
-              </div>
+        {debouncedSearchQuery && (
+          <div className="rounded-lg border bg-card p-2" role="region" aria-label="Resultados da pesquisa">
+            {searchResults.length === 0 ? (
+              <p className="px-2 py-2 text-sm text-muted-foreground">
+                Nenhum colaborador corresponde a “{debouncedSearchQuery}”.
+              </p>
             ) : (
               <>
-                {/* The new OrgChart component will handle both mobile and desktop visualization */}
-                {orgTreeData && (
-                  <OrgChartVisualization
-                    employees={employees}
-                    zoomLevel={zoomLevel}
-                    onNodeClick={handleNodeClick}
-                  />
+                <p className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
+                  {searchResults.length} resultado{searchResults.length > 1 ? "s" : ""}
+                </p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {searchResults.slice(0, SEARCH_RESULT_LIMIT).map((employee) => (
+                    <li key={employee.id}>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 gap-2"
+                        onClick={() => handleSelectFromSearch(employee)}
+                      >
+                        {employee.name}
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {employee.title}
+                        </span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+                {searchResults.length > SEARCH_RESULT_LIMIT && (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">
+                    E mais {searchResults.length - SEARCH_RESULT_LIMIT} — refine a pesquisa.
+                  </p>
                 )}
               </>
             )}
           </div>
-        </div>
-
-        {selectedEmployee && (
-          <EmployeeDetailsDialog
-            employee={selectedEmployee}
-            open={!!selectedEmployee}
-            onClose={() => setSelectedEmployee(null)}
-            allEmployees={employees}
-          />
         )}
+
+        <div className="rounded-lg border bg-card p-4">
+          <div className="mb-4 flex flex-wrap justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => chartRef.current?.zoomBy(1.2)}
+                aria-label="Aumentar zoom"
+              >
+                <ZoomIn className="mr-1 size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Aumentar</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => chartRef.current?.zoomBy(1 / 1.2)}
+                aria-label="Diminuir zoom"
+              >
+                <ZoomOut className="mr-1 size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Diminuir</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => chartRef.current?.resetView()}
+                aria-label="Repor vista"
+              >
+                <RotateCcw className="mr-1 size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Repor vista</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => chartRef.current?.toggleAll()}
+                aria-label={anyCollapsed ? "Expandir todos os ramos" : "Recolher todos os ramos"}
+              >
+                {anyCollapsed ? (
+                  <Expand className="mr-1 size-4" aria-hidden="true" />
+                ) : (
+                  <Shrink className="mr-1 size-4" aria-hidden="true" />
+                )}
+                <span className="hidden sm:inline">{anyCollapsed ? "Expandir tudo" : "Recolher tudo"}</span>
+              </Button>
+            </div>
+            <Button size="sm" onClick={() => chartRef.current?.centerOnEmployee(user.id)}>
+              <Crosshair className="mr-1 size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Centrar no meu cartão</span>
+              <span className="sm:hidden">O meu cartão</span>
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex h-[560px] flex-col items-center gap-4 pt-8">
+              <Skeleton className="size-24 rounded-lg" />
+              <Skeleton className="h-8 w-64 rounded-lg" />
+              <Skeleton className="h-8 w-64 rounded-lg" />
+            </div>
+          ) : (
+            <OrgChartVisualization
+              ref={chartRef}
+              employees={employees}
+              matchIds={matchIds}
+              searching={isSearching}
+              currentUserId={user.id}
+              onNodeClick={handleNodeClick}
+              onAnyCollapsedChange={setAnyCollapsed}
+              overlay={
+                <p className="pointer-events-none absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-full border bg-background/85 px-3.5 py-2 text-xs tabular-nums text-muted-foreground backdrop-blur">
+                  <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
+                  {employees.length} pessoas · {departmentCount} áreas
+                </p>
+              }
+            />
+          )}
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+            Arraste para navegar, use a roda para aproximar e toque numa pessoa para ver os detalhes.
+          </p>
+        </div>
       </div>
+
+      <EmployeeDetailsSheet
+        employee={selectedEmployee}
+        allEmployees={employees}
+        onClose={() => setSelectedEmployee(null)}
+        onNavigate={setSelectedEmployee}
+        onCenterOnTree={handleCenterOnTree}
+      />
     </DashboardLayout>
   );
 };

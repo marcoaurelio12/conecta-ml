@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,12 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DocumentCategory, DocumentFileType } from '@/types/document';
 
 interface DocumentFiltersProps {
-  categoryFilter: string | null;
-  fileTypeFilter: string | null;
-  onCategoryFilterChange: (value: string | null) => void;
-  onFileTypeFilterChange: (value: string | null) => void;
+  categoryFilter: DocumentCategory | null;
+  fileTypeFilter: DocumentFileType | null;
+  onCategoryFilterChange: (value: DocumentCategory | null) => void;
+  onFileTypeFilterChange: (value: DocumentFileType | null) => void;
   onClearFilters: () => void;
 }
 
@@ -26,18 +26,20 @@ export const DocumentFilters: React.FC<DocumentFiltersProps> = ({
   onFileTypeFilterChange,
   onClearFilters,
 }) => {
-  const categories = ['Policy', 'Template', 'Form', 'Guide', 'Report'];
-  const fileTypes = ['PDF', 'DOCX', 'XLSX', 'PPT', 'TXT'];
+  // Values come straight from the domain type so filters can never drift from
+  // the data (the old hard-coded English list matched nothing).
+  const categories: DocumentCategory[] = ['Política', 'Modelo', 'Formulário', 'Guia', 'Relatório'];
+  const fileTypes: DocumentFileType[] = ['PDF', 'DOCX', 'XLSX', 'PPT', 'TXT'];
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-4 bg-muted/30 rounded-lg">
+    <div className="flex flex-col gap-4 rounded-lg border bg-muted/30 p-4 sm:flex-row">
       <div className="flex-1">
         <Label htmlFor="category-filter" className="mb-2 block text-sm font-medium">
           Categoria
         </Label>
         <Select
-          value={categoryFilter || ''}
-          onValueChange={(value) => onCategoryFilterChange(value === "all" ? null : value)}
+          value={categoryFilter || 'all'}
+          onValueChange={(value) => onCategoryFilterChange(value === 'all' ? null : (value as DocumentCategory))}
         >
           <SelectTrigger id="category-filter" className="w-full">
             <SelectValue placeholder="Todas as Categorias" />
@@ -58,14 +60,14 @@ export const DocumentFilters: React.FC<DocumentFiltersProps> = ({
           Tipo de Ficheiro
         </Label>
         <Select
-          value={fileTypeFilter || ''}
-          onValueChange={(value) => onFileTypeFilterChange(value === "all" ? null : value)}
+          value={fileTypeFilter || 'all'}
+          onValueChange={(value) => onFileTypeFilterChange(value === 'all' ? null : (value as DocumentFileType))}
         >
           <SelectTrigger id="filetype-filter" className="w-full">
-            <SelectValue placeholder="All File Types" />
+            <SelectValue placeholder="Todos os Tipos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os Tipos de Ficheiros</SelectItem>
+            <SelectItem value="all">Todos os Tipos de Ficheiro</SelectItem>
             {fileTypes.map((fileType) => (
               <SelectItem key={fileType} value={fileType}>
                 {fileType}
@@ -78,11 +80,11 @@ export const DocumentFilters: React.FC<DocumentFiltersProps> = ({
       <div className="flex items-end">
         <Button
           variant="ghost"
-          className="h-10 px-2"
+          className="h-10 px-2 text-muted-foreground"
           onClick={onClearFilters}
           disabled={!categoryFilter && !fileTypeFilter}
         >
-          <X className="mr-2 h-4 w-4" />
+          <X className="mr-2 h-4 w-4" aria-hidden="true" />
           Limpar Filtros
         </Button>
       </div>

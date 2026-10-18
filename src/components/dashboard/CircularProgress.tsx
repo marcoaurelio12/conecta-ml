@@ -15,8 +15,12 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg className="w-24 h-24 transform -rotate-90">
+    <div
+      className="relative inline-flex items-center justify-center"
+      role="img"
+      aria-label={`Integração ${Math.round(percentage)}% completa`}
+    >
+      <svg className="w-24 h-24 transform -rotate-90" aria-hidden="true">
         <circle
           cx="48"
           cy="48"

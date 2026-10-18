@@ -1,50 +1,46 @@
-
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
-import { Link } from 'react-router-dom';
 import { Separator } from "@/components/ui/separator";
 
-export const MeetingsCard: React.FC = () => {
-  // Mock data - in a real app, this would come from calendar API
-  const meetings = [
-    {
-      id: 1,
-      title: "Introdução da Equipa",
-      time: "Hoje, 14:00",
-      host: "Miguel Joel"
-    },
-    {
-      id: 2,
-      title: "Sessão de Instalação TI",
-      time: "Amanhã, 10:00",
-      host: "João Tavares"
-    },
-    {
-      id: 3,
-      title: "Onbording de Recursos Humanos",
-      time: "9 de Maio, 11:30",
-      host: "Jéssica Pires"
-    }
-  ];
+const meetings = [
+  {
+    id: 1,
+    title: "Introdução da Equipa",
+    time: "Hoje, 14:00",
+    host: "Grace Lee",
+  },
+  {
+    id: 2,
+    title: "Sessão de Configuração de TI",
+    time: "Amanhã, 10:00",
+    host: "Rui Almeida",
+  },
+  {
+    id: 3,
+    title: "Sessão de Integração com RH",
+    time: "9 de Maio, 11:30",
+    host: "Sofia Garcia",
+  },
+];
 
+export const MeetingsCard: React.FC = () => {
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Próximas Reuniões</CardTitle>
-          <Calendar className="text-muted-foreground h-5 w-5" />
+          <CardTitle className="text-lg font-semibold">Próximas reuniões</CardTitle>
+          <Calendar className="size-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
       <CardContent className="pb-2">
         <div className="space-y-3">
           {meetings.map((meeting, index) => (
             <div key={meeting.id}>
-              {index > 0 && <Separator className="my-2" />}
+              {index > 0 && <Separator className="my-3" />}
               <div>
-                <h3 className="font-medium text-sm">{meeting.title}</h3>
-                <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-muted-foreground mt-1">
+                <h3 className="text-sm font-medium">{meeting.title}</h3>
+                <div className="mt-1 flex flex-col text-xs text-muted-foreground sm:flex-row sm:justify-between">
                   <span>{meeting.time}</span>
                   <span>Anfitrião: {meeting.host}</span>
                 </div>
@@ -52,12 +48,10 @@ export const MeetingsCard: React.FC = () => {
             </div>
           ))}
         </div>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Dados de exemplo — a agenda será sincronizada com o calendário da empresa.
+        </p>
       </CardContent>
-      <CardFooter className="pt-0">
-        <Button asChild variant="outline" size="sm">
-          <Link to="/calendar">Ver Calendário</Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

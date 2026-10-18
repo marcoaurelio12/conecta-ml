@@ -12,19 +12,23 @@ help — while HR and IT see who has completed what.
 During an HR internship at a large Portuguese public transport company (2025) I saw how
 onboarding really works: policies sent as PDFs, no record of who read what, new hires
 asking the same questions, and accounts created by hand. I designed this portal as my
-internship project. This repository turns that prototype into a working system that
-covers the three things onboarding actually needs: **cloud, identity and automation**.
+internship project. This repository turns that prototype into a working system centred
+on what sits behind every onboarding: **identity and access management** — HR as the
+source of truth, accounts and access that follow the role, and access that is reviewed
+and can be audited.
 
 ## Roadmap
 
 | Phase | What works | Status |
 |---|---|---|
 | 0 | Clean prototype, fictional company, repository | ✅ |
-| 1 | Deployed on Azure with **infrastructure as code (Bicep) and CI/CD (GitHub Actions)** from day one · Microsoft Entra ID sign-in · roles (employee, HR, admin) · policies stored in a database · "read and accepted" recorded with timestamp · audit export | ⏳ |
-| 2 | Joiner–mover–leaver automation with **PowerShell + Microsoft Graph**: HR registers a hire → account created, added to the department group, onboarding checklist assigned; leaver → account disabled, access removed; every action logged | ⏳ |
-| 3 | AI assistant answering from company documents, with sources — and respecting each user's access rights | ⏳ |
-| 4 | Monitoring, cost alerts and hardening | ⏳ |
+| 1 | **Microsoft Entra ID sign-in (OIDC)** · app roles (employee, manager, HR, IAM admin) decide what each person sees · deployed on Azure with **Bicep + GitHub Actions** (OIDC federated credential, no stored secrets) | ⏳ |
+| 2 | **Joiner–mover–leaver automation (Python + Microsoft Graph)**: HR registers a hire → account, manager and birthright groups from the role matrix; mover → old access removed, new access added; leaver → account disabled, sessions revoked, access removed · role matrix as code · append-only audit log | ⏳ |
+| 3 | **Access governance**: access requests with manager approval and expiry · separation-of-duties checks · recertification campaigns with evidence export · drift and orphan-account report | ⏳ |
+| 4 | **Native Entra features compared with my own build**: Conditional Access, PIM, access reviews and access packages · a SAML app · logs in Log Analytics with KQL · PowerShell admin toolkit | ⏳ |
+| Later | AI assistant over company documents that respects each user's access · SCIM provisioning | — |
 
+Full plan, milestones and licensing constraints: [`docs/iam-roadmap.md`](docs/iam-roadmap.md).
 Design decisions and their reasons: [`docs/decisions.md`](docs/decisions.md).
 
 ## What is in the prototype
@@ -34,9 +38,9 @@ IT support + tickets · feedback. UI in Portuguese (PT).
 
 ## Stack
 
-React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui. Planned: Azure Static Web Apps +
-Azure Functions, Bicep, GitHub Actions, Microsoft Entra ID, Microsoft Graph + PowerShell,
-an LLM API for the assistant.
+React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui. Planned: Microsoft Entra ID +
+MSAL, Azure Static Web Apps, Azure Functions (Python) with a managed identity, Microsoft
+Graph, Azure SQL, Bicep, GitHub Actions, Microsoft Graph PowerShell for admin scripts.
 
 ## Run locally
 

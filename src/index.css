@@ -1,90 +1,117 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Conecta design tokens.
+ *
+ * Surfaces follow a three-level model: a neutral canvas (background), white
+ * cards (card/popover), and a dark brand rail for the navigation (sidebar-*).
+ * The Nortia blue family is reserved for primary actions, links and focus;
+ * semantic colours carry status (success / warning / destructive).
+ * All values are HSL triplets consumed as hsl(var(--token)) in tailwind.config.ts.
+ */
+
 @layer base {
   :root {
-    --background: 200 20% 90%; /* #CCDBDC */
-    --foreground: 200 100% 15%; /* #003249 */
+    --background: 200 33% 97%; /* neutral cool canvas */
+    --foreground: 201 45% 15%; /* blue-ink text */
 
-    --card: 200 20% 90%; /* #CCDBDC */
-    --card-foreground: 200 100% 15%; /* #003249 */
+    --card: 0 0% 100%;
+    --card-foreground: 201 45% 15%;
 
-    --popover: 200 20% 90%; /* #CCDBDC */
-    --popover-foreground: 200 100% 15%; /* #003249 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 201 45% 15%;
 
-    --primary: 200 100% 33%; /* #007EA7 */
-    --primary-foreground: 200 20% 90%; /* #CCDBDC */
+    --primary: 195 100% 33%; /* #007EA7 — Nortia blue */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 186 40% 70%; /* #9AD1D4 */
-    --secondary-foreground: 200 100% 15%; /* #003249 */
+    --secondary: 186 45% 91%; /* soft selected tint */
+    --secondary-foreground: 201 45% 15%;
 
-    --muted: 186 40% 70%; /* #9AD1D4 */
-    --muted-foreground: 200 100% 15%; /* #003249 */
+    --muted: 200 25% 94%;
+    --muted-foreground: 201 25% 35%;
 
-    --accent: 188 38% 70%; /* #80CED7 */
-    --accent-foreground: 200 100% 15%; /* #003249 */
+    --accent: 195 45% 93%; /* hover fill */
+    --accent-foreground: 201 45% 15%;
 
-    --destructive: 0 84.2% 60.2%; /* Keeping original for now */
-    --destructive-foreground: 210 40% 98%; /* Keeping original for now */
+    --destructive: 0 74% 42%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 188 38% 70%; /* #80CED7 */
-    --input: 188 38% 70%; /* #80CED7 */
-    --ring: 200 100% 33%; /* #007EA7 */
+    --success: 152 100% 26%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 43 96% 46%;
+    --warning-foreground: 45 100% 12%;
+
+    --border: 200 20% 87%;
+    --input: 200 20% 82%;
+    --ring: 195 100% 33%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 200 20% 90%; /* #CCDBDC */
-    --sidebar-foreground: 200 100% 15%; /* #003249 */
+    /* Dark brand rail — the navigation chrome keeps the ink identity. */
+    --sidebar-background: 201 45% 13%;
+    --sidebar-foreground: 200 25% 90%;
+    --sidebar-muted: 201 18% 64%;
+    --sidebar-primary: 195 100% 33%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 201 32% 20%;
+    --sidebar-accent-foreground: 200 30% 95%;
+    --sidebar-border: 201 30% 22%;
+    --sidebar-ring: 195 100% 45%;
 
-    --sidebar-primary: 200 100% 33%; /* #007EA7 */
-    --sidebar-primary-foreground: 200 20% 90%; /* #CCDBDC */
-
-    --sidebar-accent: 188 38% 70%; /* #80CED7 */
-    --sidebar-accent-foreground: 200 100% 15%; /* #003249 */
-
-    --sidebar-border: 188 38% 70%; /* #80CED7 */
-
-    --sidebar-ring: 200 100% 33%; /* #007EA7 */
+    /* Motion language (A6): fast for hover/focus, base for entrances. */
+    --duration-fast: 150ms;
+    --duration-base: 300ms;
+    --duration-slow: 500ms;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 205 40% 8%;
+    --foreground: 200 30% 93%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 204 32% 11%;
+    --card-foreground: 200 30% 93%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 204 32% 11%;
+    --popover-foreground: 200 30% 93%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 195 85% 55%; /* lighter blue for dark surfaces */
+    --primary-foreground: 201 60% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 202 28% 18%;
+    --secondary-foreground: 200 30% 93%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 202 25% 16%;
+    --muted-foreground: 201 22% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 202 28% 20%;
+    --accent-foreground: 200 30% 93%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 152 55% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 43 95% 55%;
+    --warning-foreground: 40 100% 12%;
+
+    --border: 202 22% 22%;
+    --input: 202 22% 26%;
+    --ring: 195 85% 60%;
+
+    --sidebar-background: 204 38% 10%;
+    --sidebar-foreground: 200 25% 90%;
+    --sidebar-muted: 201 18% 64%;
+    --sidebar-primary: 195 85% 55%;
+    --sidebar-primary-foreground: 201 60% 10%;
+    --sidebar-accent: 202 30% 18%;
+    --sidebar-accent-foreground: 200 30% 95%;
+    --sidebar-border: 202 25% 20%;
+    --sidebar-ring: 195 85% 60%;
   }
 }
 
@@ -93,7 +120,46 @@
     @apply border-border;
   }
 
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+
+  ::selection {
+    @apply bg-primary/20;
+  }
+
+  /* Consistent focus ring for every interactive element (A5). */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* Honour the OS "reduce motion" setting: keep state changes, drop movement. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

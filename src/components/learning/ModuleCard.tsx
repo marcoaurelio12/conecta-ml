@@ -1,102 +1,50 @@
-
 import React from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Book, Clock } from "lucide-react";
-
-type ModuleStatus = "Não Iniciado" | "Em Progresso" | "Concluído";
-
-type Category = 
-  | "Política da Empresa"
-  | "Competências Técnicas"
-  | "Competências Interpessoais"
-  | "Conhecimento do Produto"
-  | "Conformidade";
-
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  status: ModuleStatus;
-  category: Category;
-  thumbnail: string;
-}
+import { BookOpen, Clock } from "lucide-react";
+import { LearningModule } from "@/data/learningData";
+import { ModuleStatus, moduleStatusMeta } from "@/types/status";
 
 interface ModuleCardProps {
-  module: Module;
+  module: LearningModule;
+  status: ModuleStatus;
   onClick: () => void;
 }
 
-export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick }) => {
-  const getButtonText = (status: ModuleStatus): string => {
-    switch (status) {
-      case "Não Iniciado":
-        return "Iniciar";
-      case "In Progress":
-        return "Continuar";
-      case "Completed":
-        return "Ver Módulo";
-      default:
-        return "Iniciar";
-    }
-  };
-
-  const getStatusVariant = (status: ModuleStatus) => {
-    switch (status) {
-      case "Concluído":
-        return "default";
-      case "Em Progresso":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
-  const getCategoryIcon = (category: Category) => {
-    switch (category) {
-      case "Política da Empresa":
-      case "Conformidade":
-        return <Book className="h-4 w-4" />;
-      default:
-        return <Play className="h-4 w-4" />;
-    }
-  };
+export const ModuleCard: React.FC<ModuleCardProps> = ({ module, status, onClick }) => {
+  const meta = moduleStatusMeta[status];
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-2 hover:shadow-lg">
-      <div 
-        className="h-44 bg-cover bg-center" 
-        style={{ backgroundImage: `url(${module.thumbnail})` }}
-      />
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-lg line-clamp-1">{module.title}</h3>
-          <Badge variant={getStatusVariant(module.status)} className="ml-2">
-            {module.status}
+    <Card className="flex h-full flex-col">
+      <CardContent className="flex flex-1 flex-col pt-5">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          {/* A compact marker instead of a dead cover band: same brand tint,
+              none of the 40% card height spent on decoration. */}
+          <div
+            className="flex size-10 shrink-0 items-center justify-center rounded-md bg-secondary text-primary"
+            aria-hidden="true"
+          >
+            <BookOpen className="size-5" />
+          </div>
+          <Badge variant={meta.badgeVariant} className="shrink-0">
+            {status}
           </Badge>
         </div>
-        <p className="text-muted-foreground line-clamp-3 min-h-[4.5rem]">
+        <h3 className="mb-1.5 font-semibold leading-snug">{module.title}</h3>
+        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[3.75rem]">
           {module.description}
         </p>
-        <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
+        <div className="mt-auto flex items-center gap-2 pt-4 text-sm text-muted-foreground">
+          <Clock className="size-4" aria-hidden="true" />
           <span>{module.duration} min</span>
-          <div className="ml-auto flex items-center gap-1">
-            {getCategoryIcon(module.category)}
-            <span className="text-xs">{module.category}</span>
-          </div>
+          <span className="ml-auto text-xs">{module.category}</span>
         </div>
       </CardContent>
-      <CardFooter className="pt-0 pb-4">
-        <Button 
-          className="w-full"
-          variant={module.status === "Não Iniciado" ? "default" :
-                   module.status === "Em Progresso" ? "secondary" : "outline"}
-          onClick={onClick}
-        >
-          {getButtonText(module.status)}
+
+      <CardFooter className="pb-5 pt-0">
+        <Button className="w-full" variant={status === "Concluído" ? "outline" : "default"} onClick={onClick}>
+          {meta.actionLabel}
         </Button>
       </CardFooter>
     </Card>

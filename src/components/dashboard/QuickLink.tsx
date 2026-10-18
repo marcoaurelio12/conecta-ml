@@ -19,12 +19,12 @@ export const QuickLink: React.FC<QuickLinkProps> = ({
   className 
 }) => {
   return (
-    <Link 
-      to={href} 
+    <Link
+      to={href}
       className={cn(
-        "block p-4 border rounded-lg transition-all duration-200",
-        "hover:shadow-md hover:-translate-y-1 hover:border-primary/50",
-        "bg-card text-card-foreground",
+        "block rounded-lg border bg-card p-4 text-card-foreground transition-all duration-fast",
+        "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
     >

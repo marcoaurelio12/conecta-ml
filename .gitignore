@@ -26,3 +26,6 @@ dist-ssr
 # env
 .env*
 !.env.example
+
+# Local tool reports (contain local paths)
+.impeccable/

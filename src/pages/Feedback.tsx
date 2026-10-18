@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -33,9 +32,9 @@ import ConfettiEffect from "@/components/feedback/ConfettiEffect";
 
 // Define the form schema with validation
 const formSchema = z.object({
-  story: z.string().max(600, { message: "Maximum 600 characters allowed" }).min(1, { message: "Partilha uma história, por favor." }),
-  levelUp: z.string().max(600, { message: "Maximum 600 characters allowed" }).min(1, { message: "Partilha o teu momento, por favor." }),
-  podcastTitle: z.string().max(600, { message: "Maximum 600 characters allowed" }).min(1, { message: "Dê um título, por favor." }),
+  story: z.string().max(600, { message: "Máximo de 600 caracteres." }).min(1, { message: "Partilhe uma história, por favor." }),
+  levelUp: z.string().max(600, { message: "Máximo de 600 caracteres." }).min(1, { message: "Partilhe o seu momento, por favor." }),
+  podcastTitle: z.string().max(600, { message: "Máximo de 600 caracteres." }).min(1, { message: "Dê um título, por favor." }),
   receivedEquipment: z.boolean(),
   metManager: z.boolean(),
   knowTimeOff: z.boolean(),
@@ -46,13 +45,8 @@ type FeedbackFormValues = z.infer<typeof formSchema>;
 
 const Feedback = () => {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState(1);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  
-  const totalSections = 3;
-  const progressPercentage = (activeSection / totalSections) * 100;
 
   const form = useForm<FeedbackFormValues>({
     resolver: zodResolver(formSchema),
@@ -66,9 +60,15 @@ const Feedback = () => {
     },
   });
 
-  const handleSectionFocus = (section: number) => {
-    setActiveSection(section);
-  };
+  // Progress counts the required answers the user has actually written —
+  // not which section they last focused.
+  const story = form.watch("story");
+  const levelUp = form.watch("levelUp");
+  const podcastTitle = form.watch("podcastTitle");
+  const answeredTexts = [story, levelUp, podcastTitle].filter(
+    (value) => value.trim().length > 0
+  ).length;
+  const progressPercentage = (answeredTexts / 3) * 100;
 
   const onSubmit = async (data: FeedbackFormValues) => {
     try {
@@ -77,12 +77,17 @@ const Feedback = () => {
       
       console.log("Formulário submetido:", data);
       
-      // Show success animation and message
-      setShowConfetti(true);
-      setTimeout(() => {
-        setShowConfetti(false);
+      // Show the success animation unless the visitor prefers reduced motion.
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
         setShowThankYou(true);
-      }, 3000);
+      } else {
+        setShowConfetti(true);
+        setTimeout(() => {
+          setShowConfetti(false);
+          setShowThankYou(true);
+        }, 3000);
+      }
       
       // In a real implementation, you would POST to an API endpoint
       // await fetch('/api/feedback', {
@@ -98,21 +103,26 @@ const Feedback = () => {
     <DashboardLayout>
       <div className="container max-w-4xl mx-auto">
         <div className="mb-8">
-          
-          <h1 className="text-4xl font-bold mb-2">A Sua Voz Importa</h1>
-          <p className="text-xl text-muted-foreground">Conte-nos sobre as suas primeiras semanas</p>
+          <h1 className="text-3xl font-bold tracking-tight">A Sua Voz Importa</h1>
+          <p className="mt-1 text-muted-foreground">Conte-nos sobre as suas primeiras semanas</p>
         </div>
-        
+
         <PrivacyBanner />
-        
+
         <div className="mb-8">
           <p className="text-muted-foreground">
             Tempo estimado: 4–5 min • As respostas são anónimas, a menos que escolha adicionar o seu nome.
           </p>
         </div>
-        
+
         <div className="mb-8">
-          <Progress value={progressPercentage} className="h-2" />
+          <Progress value={progressPercentage} className="h-2" aria-label={`${answeredTexts} de 3 respostas preenchidas`} />
+          <p
+            className="mt-2 text-sm text-muted-foreground"
+            role="status"
+          >
+            {answeredTexts} de 3 respostas escritas
+          </p>
         </div>
         
         {showThankYou ? (
@@ -127,12 +137,10 @@ const Feedback = () => {
               <p>Agradecemos por dedicar o seu tempo a partilhar os seus pensamentos connosco.</p>
             </CardContent>
             <CardFooter>
-              <Button
-                onClick={() => window.open('mailto:rh@nortia.example?subject=Schedule%20a%2015-min%20chat', '_blank')}
-                variant="outline"
-                className="mt-4"
-              >
-                Quer falar mais? Agende uma conversa de 15 minutos
+              <Button asChild variant="outline" className="mt-4">
+                <a href="mailto:rh@nortia.example?subject=Conversa%20de%2015%20minutos">
+                  Quer falar mais? Agende uma conversa de 15 minutos
+                </a>
               </Button>
             </CardFooter>
           </Card>
@@ -142,7 +150,6 @@ const Feedback = () => {
               {/* Section 1: Open Questions */}
               <div 
                 className="space-y-6" 
-                onFocus={() => handleSectionFocus(1)}
                 aria-labelledby="section1-title"
               >
                 <h2 id="section1-title" className="text-2xl font-semibold">Perguntas Abertas</h2>
@@ -160,7 +167,7 @@ const Feedback = () => {
                           <Textarea
                             {...field}
                             className="min-h-[120px] resize-none"
-                            placeholder="Escreva a sua resposta aqui..."
+                            placeholder="Escreva a sua resposta aqui…"
                           />
                           <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
                             {field.value.length}/600
@@ -185,7 +192,7 @@ const Feedback = () => {
                           <Textarea
                             {...field}
                             className="min-h-[120px] resize-none"
-                            placeholder="Escreva a sua resposta aqui..."
+                            placeholder="Escreva a sua resposta aqui…"
                           />
                           <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
                             {field.value.length}/600
@@ -210,7 +217,7 @@ const Feedback = () => {
                           <Textarea
                             {...field}
                             className="min-h-[120px] resize-none"
-                            placeholder="Escreva a sua resposta aqui..."
+                            placeholder="Escreva a sua resposta aqui…"
                           />
                           <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
                             {field.value.length}/600
@@ -226,7 +233,6 @@ const Feedback = () => {
               {/* Section 2: Yes/No Toggles */}
               <div 
                 className="space-y-6" 
-                onFocus={() => handleSectionFocus(2)}
                 aria-labelledby="section2-title"
               >
                 <h2 id="section2-title" className="text-2xl font-semibold">Verificações Rápidas</h2>
@@ -244,13 +250,13 @@ const Feedback = () => {
                         </div>
                         <FormControl>
                           <div className="flex items-center gap-2">
-                            <span className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
+                            <span aria-hidden="true" className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
                             <Switch
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               aria-label="Recebeu todo o equipamento necessário antes do Dia 1?"
                             />
-                            <span className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
+                            <span aria-hidden="true" className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
                           </div>
                         </FormControl>
                       </FormItem>
@@ -269,13 +275,13 @@ const Feedback = () => {
                         </div>
                         <FormControl>
                           <div className="flex items-center gap-2">
-                            <span className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
+                            <span aria-hidden="true" className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
                             <Switch
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               aria-label="Já se encontrou com o seu gestor ou mentor?"
                             />
-                            <span className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
+                            <span aria-hidden="true" className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
                           </div>
                         </FormControl>
                       </FormItem>
@@ -294,13 +300,13 @@ const Feedback = () => {
                         </div>
                         <FormControl>
                           <div className="flex items-center gap-2">
-                            <span className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
+                            <span aria-hidden="true" className={field.value ? "text-muted-foreground" : "text-foreground font-semibold"}>Não</span>
                             <Switch
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               aria-label="Sabe como solicitar folgas?"
                             />
-                            <span className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
+                            <span aria-hidden="true" className={field.value ? "text-foreground font-semibold" : "text-muted-foreground"}>Sim</span>
                           </div>
                         </FormControl>
                       </FormItem>
@@ -312,7 +318,6 @@ const Feedback = () => {
               {/* Section 3: Optional Upload */}
               <div 
                 className="space-y-6" 
-                onFocus={() => handleSectionFocus(3)}
                 aria-labelledby="section3-title"
               >
                 <h2 id="section3-title" className="text-2xl font-semibold">Carregamento Opcional</h2>
@@ -322,7 +327,6 @@ const Feedback = () => {
                 
                 <FeedbackFileUpload
                   onFileSelected={(file) => form.setValue("uploadFile", file)}
-                  isUploading={isUploading}
                 />
               </div>
               
@@ -333,7 +337,7 @@ const Feedback = () => {
                   disabled={form.formState.isSubmitting}
                   className="w-full md:w-auto"
                 >
-                  {form.formState.isSubmitting ? "A enviar..." : "Enviar Feedback"}
+                  {form.formState.isSubmitting ? "A enviar…" : "Enviar Feedback"}
                 </Button>
               </div>
             </form>
@@ -341,16 +345,6 @@ const Feedback = () => {
         )}
         
         {showConfetti && <ConfettiEffect />}
-        
-        <div className="fixed bottom-6 right-6 z-10 hidden md:block">
-          <Button
-            onClick={() => window.open('mailto:rh@nortia.example', '_blank')}
-            variant="secondary"
-            className="shadow-lg"
-          >
-            Contactar RH
-          </Button>
-        </div>
       </div>
     </DashboardLayout>
   );

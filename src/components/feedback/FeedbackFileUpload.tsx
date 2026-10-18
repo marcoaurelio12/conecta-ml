@@ -1,18 +1,13 @@
-
 import React, { useState, useRef } from "react";
-import { Upload } from "lucide-react";
+import { Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface FeedbackFileUploadProps {
   onFileSelected: (file: File) => void;
-  isUploading: boolean;
 }
 
-const FeedbackFileUpload: React.FC<FeedbackFileUploadProps> = ({
-  onFileSelected,
-  isUploading,
-}) => {
+const FeedbackFileUpload: React.FC<FeedbackFileUploadProps> = ({ onFileSelected }) => {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,47 +25,41 @@ const FeedbackFileUpload: React.FC<FeedbackFileUploadProps> = ({
   const validateFile = (file: File): boolean => {
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     const maxSize = 5 * 1024 * 1024; // 5MB
-    
+
     if (!validTypes.includes(file.type)) {
       toast.error("Tipo de ficheiro inválido. Por favor, carregue um ficheiro JPG, PNG ou PDF.");
       return false;
     }
-    
+
     if (file.size > maxSize) {
       toast.error("O ficheiro é muito grande. O tamanho máximo é de 5MB.");
       return false;
     }
-    
+
     return true;
+  };
+
+  const acceptFile = (candidate: File) => {
+    if (validateFile(candidate)) {
+      setFile(candidate);
+      onFileSelected(candidate);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (validateFile(droppedFile)) {
-        setFile(droppedFile);
-        onFileSelected(droppedFile);
-      }
+      acceptFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (validateFile(selectedFile)) {
-        setFile(selectedFile);
-        onFileSelected(selectedFile);
-      }
+      acceptFile(e.target.files[0]);
     }
-  };
-
-  const handleClick = () => {
-    inputRef.current?.click();
   };
 
   const handleRemove = () => {
@@ -80,13 +69,22 @@ const FeedbackFileUpload: React.FC<FeedbackFileUploadProps> = ({
     }
   };
 
+  const handleDropZoneKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      inputRef.current?.click();
+    }
+  };
+
   return (
     <Card
-      className={`cursor-pointer ${
+      className={`transition-colors duration-fast ${
         dragActive ? "border-primary" : ""
-      } transition-all duration-200`}
+      }`}
       onDragEnter={handleDrag}
-      onClick={!file ? handleClick : undefined}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
     >
       <CardContent className="p-6">
         <input
@@ -95,63 +93,50 @@ const FeedbackFileUpload: React.FC<FeedbackFileUploadProps> = ({
           className="hidden"
           accept=".jpg,.jpeg,.png,.pdf"
           onChange={handleChange}
-          disabled={isUploading}
+          aria-hidden="true"
+          tabIndex={-1}
         />
 
-        <div
-          className={`flex flex-col items-center justify-center gap-4 p-6 text-center ${
-            dragActive ? "bg-muted/50" : ""
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          {file ? (
-            <div className="w-full">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Upload size={16} />
-                  <span className="font-medium truncate max-w-[250px]">
-                    {file.name}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemove();
-                  }}
-                  className="text-sm text-muted-foreground hover:text-destructive"
-                  aria-label="Remover ficheiro"
-                >
-                  Remover
-                </button>
-              </div>
-              <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full bg-primary transition-all duration-300 ${
-                    isUploading ? "w-3/4" : "w-full"
-                  }`}
-                />
-              </div>
+        {file ? (
+          <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/40 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-2 text-sm">
+              <Paperclip className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="truncate font-medium">{file.name}</span>
+              <span className="shrink-0 text-muted-foreground">
+                ({Math.round(file.size / 1024)} KB)
+              </span>
             </div>
-          ) : (
-            <>
-              <div className="rounded-full bg-muted p-4">
-                <Upload className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-base font-medium mb-1">
-                  Arraste e largue o seu ficheiro aqui ou clique para procurar
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  JPG, PNG ou PDF (máx. 5MB)
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <X className="size-4" aria-hidden="true" />
+              Remover
+            </button>
+          </div>
+        ) : (
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Escolher ficheiro para anexar (JPG, PNG ou PDF até 5MB)"
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={handleDropZoneKeyDown}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg p-6 text-center outline-none transition-colors duration-fast focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              dragActive ? "bg-muted/50" : ""
+            }`}
+          >
+            <div className="rounded-full bg-muted p-4">
+              <Upload className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="mb-1 text-base font-medium">
+                Arraste e largue o seu ficheiro aqui, ou prima Enter para procurar
+              </p>
+              <p className="text-sm text-muted-foreground">JPG, PNG ou PDF (máx. 5MB)</p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
