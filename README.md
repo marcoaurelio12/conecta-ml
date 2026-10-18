@@ -43,6 +43,23 @@ Design decisions and their reasons: [`docs/decisions.md`](docs/decisions.md).
 Dashboard · onboarding checklist · learning · documents library · org chart · benefits ·
 IT support + tickets · feedback. UI in Portuguese (PT).
 
+## The original chatbot (2025)
+
+The internship prototype included **Metrox**, an HR assistant I built on Botpress. Its
+knowledge base was a set of public PDF documents on the rights and duties of Metropolitano
+de Lisboa workers, and it answered new hires' questions from those documents in Portuguese:
+career progression, holidays, absences, working hours.
+
+| Welcome | New hire | Answers from the company rules |
+|---|---|---|
+| <img src="docs/img/metrox-01-greeting.png" alt="Metrox introduces itself as an assistant for workers' rights and duties" width="240"> | <img src="docs/img/metrox-02-new-hire.png" alt="Metrox welcomes a new hire" width="240"> | <img src="docs/img/metrox-03-policy-answers.png" alt="Metrox answers questions on career progression, holidays, absences and working hours" width="360"> |
+
+It is **not embedded in the demo**: it answers with the real company's rules, while the demo
+uses the fictional Nortia, and it runs on the Botpress platform rather than in this code
+(decision 002). The roadmap's assistant replaces it with one that answers from Nortia's
+documents and **respects each user's access**: a new hire cannot get an HR-only document
+through the chat.
+
 ## Stack
 
 React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui. Planned: Microsoft Entra ID +
@@ -64,8 +81,7 @@ Entra ID sign-in arrives in phase 1, switching roles is how a visitor sees what 
 ## Origin and honesty note
 
 The 2025 prototype UI was generated with Lovable (an AI app builder) from my own design and
-content; its HR chatbot ran on Botpress, in a third-party account, and was removed from this
-repository (decision 002). The rebuild is done by me with AI-assisted development (Claude Code); every
+content; its HR chatbot, Metrox, is described [above](#the-original-chatbot-2025). The rebuild is done by me with AI-assisted development (Claude Code); every
 design decision is written down in `docs/decisions.md` so it can be explained.
 
 — Marco Henriques
