@@ -165,3 +165,16 @@ Trade-offs: the canvas engine is ours to maintain (tsc-clean, ~300 lines, no new
 dependencies); `@ctrl/react-orgchart` is now unused and can be dropped from package.json in
 a cleanup pass; `EmployeeDetailsDialog` and the already-unimported `EmployeeListView` were
 removed, and both remain recoverable from git.
+
+## 013 — Public demo on Cloudflare Pages; name the origin, keep Nortia (2026-10-18)
+
+**Decision:** a demo build (`npm run build:demo`) is published at
+[conecta-ml.pages.dev](https://conecta-ml.pages.dev) with the role switcher visible and a
+notice that all data is fictional. The README now names Metropolitano de Lisboa as the
+origin of the project (my HR internship, 2025), while the app keeps the fictional Nortia.
+**Why:** a recruiter should see the role-based behaviour in one click, without cloning the
+repository; Cloudflare Pages is free, fast to set up and a stack I already run. Naming the
+origin is a fact about my own work; using the brand inside the app would read as an
+official system, which is what decision 001 avoids. Trade-off: until M1 the roles are
+switched by hand, not granted by Entra ID; the Azure deployment with real sign-in comes
+in M1 alongside this demo.

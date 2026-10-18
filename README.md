@@ -4,15 +4,22 @@ Onboarding portal for **Nortia**, a fictional mid-sized company. New hires read 
 mandatory policies, follow their onboarding checklist, find documents and people, and get
 help — while HR and IT see who has completed what.
 
+**▶ Live demo: [conecta-ml.pages.dev](https://conecta-ml.pages.dev)**. Use "Ver o portal como"
+in the sidebar to switch between employee, manager, HR and IAM admin.
+
 > **Status:** front-end prototype. Being rebuilt into a real application in phases (below).
 > All company data, people and policies are fictional.
 
 ## Why this exists
 
-During an HR internship at a large Portuguese public transport company (2025) I saw how
-onboarding really works: policies sent as PDFs, no record of who read what, new hires
-asking the same questions, and accounts created by hand. I designed this portal as my
-internship project. This repository turns that prototype into a working system centred
+Conecta started as my final internship project for my HR degree, at **Metropolitano de
+Lisboa** (2025, graded 19/20). In three HR areas I saw how onboarding really works: policies
+sent as PDFs, no record of who read what, new hires asking the same questions, and accounts
+created by hand. The name "Conecta ML" comes from that project. The company in this
+repository is fictional (Nortia): the original brand, internal domains and policies are not
+mine to publish, and this is not an official Metropolitano de Lisboa system.
+
+This repository turns that prototype into a working system centred
 on what sits behind every onboarding: **identity and access management** — HR as the
 source of truth, accounts and access that follow the role, and access that is reviewed
 and can be audited.
@@ -57,7 +64,8 @@ Entra ID sign-in arrives in phase 1, switching roles is how a visitor sees what 
 ## Origin and honesty note
 
 The 2025 prototype UI was generated with Lovable (an AI app builder) from my own design and
-content. The rebuild is done by me with AI-assisted development (Claude Code); every
+content; its HR chatbot ran on Botpress, in a third-party account, and was removed from this
+repository (decision 002). The rebuild is done by me with AI-assisted development (Claude Code); every
 design decision is written down in `docs/decisions.md` so it can be explained.
 
 — Marco Henriques
